@@ -26,7 +26,8 @@ var start = function(p) {
                 height: blockDimensions.height,
                 hasPlayer: false,
                 hasTree: false,
-                hasCPU: false
+                hasCPU: false,
+                hasLake: false
             };
         }
     }
@@ -35,8 +36,40 @@ var start = function(p) {
     var playerY = p.floor(p.random(0, worldDimensions.height));
     world[playerX][playerY].hasPlayer = true;
 
-    var numTrees = p.floor(p.random(6, 14));
-
+	var numTrees = p.floor(p.random(6, 14));
+	
+	var numLakes = p.floor(p.random(1, 3));
+	for (var i = 0; i < numLakes; i++) {
+		var lakeX = p.floor(p.random(0, worldDimensions.width-1));
+		var lakeY = p.floor(p.random(0, worldDimensions.height-1));
+		
+		world[lakeX][lakeY].hasLake = true;
+		
+		if (lakeY + 1 < worldDimensions.height) {
+			world[lakeX][lakeY+1].hasLake = true;
+		}
+		if (lakeY - 1 >= 0) {
+			world[lakeX][lakeY-1].hasLake = true;
+		}
+		if (lakeX + 1 < worldDimensions.width) {
+			world[lakeX+1][lakeY].hasLake = true;
+		}
+		if (lakeX - 1 >= 0) {
+			world[lakeX-1][lakeY].hasLake = true;
+		}
+		if (lakeX + 1 < worldDimensions.width && lakeY + 1 < worldDimensions.height) {
+			world[lakeX+1][lakeY+1].hasLake = true;
+		}
+		if (lakeX + 1 < worldDimensions.width && lakeY - 1 >= 0) {
+			world[lakeX+1][lakeY-1].hasLake = true;
+		}
+		if (lakeX - 1 >= 0 && lakeY - 1 >= 0) {
+			world[lakeX-1][lakeY-1].hasLake = true;
+		}
+		if (lakeX - 1 >= 0 && lakeY + 1 < worldDimensions.height) {
+			world[lakeX-1][lakeY+1].hasLake = true;
+		}
+	}
     for (var i = 0; i < numTrees; i++) {
         var treeX = p.floor(p.random(0, worldDimensions.width));
         var treeY = p.floor(p.random(0, worldDimensions.height));
@@ -84,14 +117,25 @@ var start = function(p) {
             p.ellipse(x + 10, y + 40, 45, 45);
             p.stroke(0, 0, 0);
         },
-
+		drawLake: function(block) {
+			if (block.hasLake === true) {
+				p.fill(13, 0, 255);
+				p.noStroke();
+				p.rect(block.x, block.y, blockDimensions.width, blockDimensions.height);
+				p.stroke(0, 0, 0);
+			}
+		},
         draw: function() {
             for (var i = 0; i < world.length; i += 1) {
                 for (var j = 0; j < world[i].length; j += 1) {
                     this.drawEnvironment(world[i][j]);
                 }
             }
-
+			for (var i = 0; i < world.length; i += 1) {
+				for (var j = 0; j < world[i].length; j += 1) {
+					this.drawLake(world[i][j]);
+				}
+			}
             for (var i = 0; i < world.length; i += 1) {
                 for (var j = 0; j < world[i].length; j += 1) {
                     this.drawPlayer(world[i][j]);
@@ -112,7 +156,7 @@ var start = function(p) {
         },
 
         drawTrees: function(block) {
-            if(block.hasTree === true) {
+            if(block.hasTree === true && block.hasLake === false) {
                 this.drawTree(block.x, block.y, block.width, block.height);  
             }
         },
