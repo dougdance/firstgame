@@ -109,7 +109,7 @@ var start = function(p) {
     var jack = {
 
         drawTree: function(x, y) {
-            p.fill(75, 168, 200);
+            p.fill(75, 168, 59);
             p.noStroke();
             p.ellipse(x + 10, y + 10, 45, 45);
             p.ellipse(x + 40, y + 10, 45, 45);
