@@ -54,50 +54,50 @@ var start = function(p) {
     var playerY = getRandomInt(0, worldDimensions.height - 1);
     world[playerX][playerY].hasPlayer = true;
 
-	var numTrees = getRandomInt(6, 14);
-	
-	var numLakes = getRandomInt(1, 3);
-	for (var i = 0; i < numLakes; i++) {
-		var lakeX = getRandomInt(0, worldDimensions.width - 1);
-		var lakeY = getRandomInt(0, worldDimensions.height - 1);
-		
-		world[lakeX][lakeY].hasLake = true;
-		
-		if (lakeY + 1 < worldDimensions.height) {
-			world[lakeX][lakeY+1].hasLake = true;
-		}
-		if (lakeY - 1 >= 0) {
-			world[lakeX][lakeY-1].hasLake = true;
-		}
-		if (lakeX + 1 < worldDimensions.width) {
-			world[lakeX+1][lakeY].hasLake = true;
-		}
-		if (lakeX - 1 >= 0) {
-			world[lakeX-1][lakeY].hasLake = true;
-		}
-		if (lakeX + 1 < worldDimensions.width && lakeY + 1 < worldDimensions.height) {
-			world[lakeX+1][lakeY+1].hasLake = true;
-		}
-		if (lakeX + 1 < worldDimensions.width && lakeY - 1 >= 0) {
-			world[lakeX+1][lakeY-1].hasLake = true;
-		}
-		if (lakeX - 1 >= 0 && lakeY - 1 >= 0) {
-			world[lakeX-1][lakeY-1].hasLake = true;
-		}
-		if (lakeX - 1 >= 0 && lakeY + 1 < worldDimensions.height) {
-			world[lakeX-1][lakeY+1].hasLake = true;
-		}
-	}
+    var numTrees = getRandomInt(6, 14);
+    
+    var numLakes = getRandomInt(1, 3);
+    for (var i = 0; i < numLakes; i++) {
+        var lakeX = getRandomInt(0, worldDimensions.width - 1);
+        var lakeY = getRandomInt(0, worldDimensions.height - 1);
+        
+        world[lakeX][lakeY].hasLake = true;
+        
+        if (lakeY + 1 < worldDimensions.height) {
+            world[lakeX][lakeY+1].hasLake = true;
+        }
+        if (lakeY - 1 >= 0) {
+            world[lakeX][lakeY-1].hasLake = true;
+        }
+        if (lakeX + 1 < worldDimensions.width) {
+            world[lakeX+1][lakeY].hasLake = true;
+        }
+        if (lakeX - 1 >= 0) {
+            world[lakeX-1][lakeY].hasLake = true;
+        }
+        if (lakeX + 1 < worldDimensions.width && lakeY + 1 < worldDimensions.height) {
+            world[lakeX+1][lakeY+1].hasLake = true;
+        }
+        if (lakeX + 1 < worldDimensions.width && lakeY - 1 >= 0) {
+            world[lakeX+1][lakeY-1].hasLake = true;
+        }
+        if (lakeX - 1 >= 0 && lakeY - 1 >= 0) {
+            world[lakeX-1][lakeY-1].hasLake = true;
+        }
+        if (lakeX - 1 >= 0 && lakeY + 1 < worldDimensions.height) {
+            world[lakeX-1][lakeY+1].hasLake = true;
+        }
+    }
     for (var i = 0; i < numTrees; i++) {
-		var treeX = getRandomInt(0, worldDimensions.width - 1);
-		var treeY = getRandomInt(0, worldDimensions.height - 1);
+        var treeX = getRandomInt(0, worldDimensions.width - 1);
+        var treeY = getRandomInt(0, worldDimensions.height - 1);
         world[treeX][treeY].hasTree = true;
     }
 
     var numCPUs = getRandomInt(3, 7);
     for (var i = 0; i < numCPUs; i++) {
-		var cpuX = getRandomInt(0, worldDimensions.width - 1);
-		var cpuY = getRandomInt(0, worldDimensions.height - 1);
+        var cpuX = getRandomInt(0, worldDimensions.width - 1);
+        var cpuY = getRandomInt(0, worldDimensions.height - 1);
         world[cpuX][cpuY].hasCPU = true;
     }
 
@@ -200,25 +200,25 @@ var start = function(p) {
             p.ellipse(x + 10, y + 40, 45, 45);
             p.stroke(0, 0, 0);
         },
-		drawLake: function(block) {
-			if (block.hasLake === true) {
-				p.fill(13, 0, 255);
-				p.noStroke();
-				p.rect(block.x, block.y, blockDimensions.width, blockDimensions.height);
-				p.stroke(0, 0, 0);
-			}
-		},
+        drawLake: function(block) {
+            if (block.hasLake === true) {
+                p.fill(13, 0, 255);
+                p.noStroke();
+                p.rect(block.x, block.y, blockDimensions.width, blockDimensions.height);
+                p.stroke(0, 0, 0);
+            }
+        },
         draw: function() {
             for (var i = 0; i < world.length; i += 1) {
                 for (var j = 0; j < world[i].length; j += 1) {
                     this.drawEnvironment(world[i][j]);
                 }
             }
-			for (var i = 0; i < world.length; i += 1) {
-				for (var j = 0; j < world[i].length; j += 1) {
-					this.drawLake(world[i][j]);
-				}
-			}
+            for (var i = 0; i < world.length; i += 1) {
+                for (var j = 0; j < world[i].length; j += 1) {
+                    this.drawLake(world[i][j]);
+                }
+            }
             for (var i = 0; i < world.length; i += 1) {
                 for (var j = 0; j < world[i].length; j += 1) {
                     this.drawPlayer(world[i][j]);
