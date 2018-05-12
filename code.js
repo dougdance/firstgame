@@ -1,6 +1,24 @@
 var start = function(p) {
+    /**
+     *
+     *
+     * ProcessingJS Initialization
+     *
+     *
+     */
     p.size(600, 600); 
     p.frameRate(30);
+
+    /**
+     *
+     *
+     * Common Functions
+     *
+     *
+     */
+    var getRandomInt = function(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    };
 
     // jack's stuff goes in here
 
@@ -32,54 +50,54 @@ var start = function(p) {
         }
     }
 
-    var playerX = p.floor(p.random(0, worldDimensions.width));
-    var playerY = p.floor(p.random(0, worldDimensions.height));
+    var playerX = getRandomInt(0, worldDimensions.width - 1);
+    var playerY = getRandomInt(0, worldDimensions.height - 1);
     world[playerX][playerY].hasPlayer = true;
 
-	var numTrees = p.floor(p.random(6, 14));
-	
-	var numLakes = p.floor(p.random(1, 3));
-	for (var i = 0; i < numLakes; i++) {
-		var lakeX = p.floor(p.random(0, worldDimensions.width-1));
-		var lakeY = p.floor(p.random(0, worldDimensions.height-1));
-		
-		world[lakeX][lakeY].hasLake = true;
-		
-		if (lakeY + 1 < worldDimensions.height) {
-			world[lakeX][lakeY+1].hasLake = true;
-		}
-		if (lakeY - 1 >= 0) {
-			world[lakeX][lakeY-1].hasLake = true;
-		}
-		if (lakeX + 1 < worldDimensions.width) {
-			world[lakeX+1][lakeY].hasLake = true;
-		}
-		if (lakeX - 1 >= 0) {
-			world[lakeX-1][lakeY].hasLake = true;
-		}
-		if (lakeX + 1 < worldDimensions.width && lakeY + 1 < worldDimensions.height) {
-			world[lakeX+1][lakeY+1].hasLake = true;
-		}
-		if (lakeX + 1 < worldDimensions.width && lakeY - 1 >= 0) {
-			world[lakeX+1][lakeY-1].hasLake = true;
-		}
-		if (lakeX - 1 >= 0 && lakeY - 1 >= 0) {
-			world[lakeX-1][lakeY-1].hasLake = true;
-		}
-		if (lakeX - 1 >= 0 && lakeY + 1 < worldDimensions.height) {
-			world[lakeX-1][lakeY+1].hasLake = true;
-		}
-	}
+    var numTrees = getRandomInt(6, 14);
+    
+    var numLakes = getRandomInt(1, 3);
+    for (var i = 0; i < numLakes; i++) {
+        var lakeX = getRandomInt(0, worldDimensions.width - 1);
+        var lakeY = getRandomInt(0, worldDimensions.height - 1);
+        
+        world[lakeX][lakeY].hasLake = true;
+        
+        if (lakeY + 1 < worldDimensions.height) {
+            world[lakeX][lakeY+1].hasLake = true;
+        }
+        if (lakeY - 1 >= 0) {
+            world[lakeX][lakeY-1].hasLake = true;
+        }
+        if (lakeX + 1 < worldDimensions.width) {
+            world[lakeX+1][lakeY].hasLake = true;
+        }
+        if (lakeX - 1 >= 0) {
+            world[lakeX-1][lakeY].hasLake = true;
+        }
+        if (lakeX + 1 < worldDimensions.width && lakeY + 1 < worldDimensions.height) {
+            world[lakeX+1][lakeY+1].hasLake = true;
+        }
+        if (lakeX + 1 < worldDimensions.width && lakeY - 1 >= 0) {
+            world[lakeX+1][lakeY-1].hasLake = true;
+        }
+        if (lakeX - 1 >= 0 && lakeY - 1 >= 0) {
+            world[lakeX-1][lakeY-1].hasLake = true;
+        }
+        if (lakeX - 1 >= 0 && lakeY + 1 < worldDimensions.height) {
+            world[lakeX-1][lakeY+1].hasLake = true;
+        }
+    }
     for (var i = 0; i < numTrees; i++) {
-        var treeX = p.floor(p.random(0, worldDimensions.width));
-        var treeY = p.floor(p.random(0, worldDimensions.height));
+        var treeX = getRandomInt(0, worldDimensions.width - 1);
+        var treeY = getRandomInt(0, worldDimensions.height - 1);
         world[treeX][treeY].hasTree = true;
     }
 
-    var numCPUs = p.floor(p.random(2, 4));
+    var numCPUs = getRandomInt(3, 7);
     for (var i = 0; i < numCPUs; i++) {
-        var cpuX = p.floor(p.random(0, worldDimensions.width));
-        var cpuY = p.floor(p.random(0, worldDimensions.height));
+        var cpuX = getRandomInt(0, worldDimensions.width - 1);
+        var cpuY = getRandomInt(0, worldDimensions.height - 1);
         world[cpuX][cpuY].hasCPU = true;
     }
 
@@ -91,16 +109,81 @@ var start = function(p) {
     };
 
     // dad's stuff goes in here
-    var dad = {
-        events: [],
+    var dad = null;
+    dad = {
+        events: {},
         tick: function() {
-            for (var i = 0; i < this.events.length; i++) {
-                this.events[i]();
+            for (var key in this.events) {
+                this.events[key]();
             }
-            this.events = [];
+            this.events = {};
         },
-        addEvent: function(event) {
-            this.events.push(event);
+        addEvent: function(type, event) {
+            this.events[type] = event;
+        },
+        isEmptyPoint: function(x, y) {
+            if (x < 0 || y < 0) {
+                return false;
+            }
+            if (x >= worldDimensions.width || y >= worldDimensions.height) {
+                return false;
+            }
+            var block = world[x][y];
+            if (block.hasPlayer === true || block.hasLake === true || block.hasCPU === true) {
+                return false;
+            }
+            return true;
+        },
+        moveCPUs: function() {
+            var oldPoints = {};
+            var newPoints = {};
+            for (var x = 0; x < world.length; x += 1) {
+                for (var y = 0; y < world[x].length; y += 1) {
+                    if (world[x][y].hasCPU === true)
+                    {
+                        // randomly decide to move
+                        if (getRandomInt(0, 100) < 98) {
+                            continue;
+                        }
+                        // try one of up, right, down, left 5 times
+                        for (var i = 0; i < 5; i++) {
+                            var randomInt = getRandomInt(0, 3);
+                            var candidateX = x;
+                            var candidateY = y;
+                            // UP
+                            if (randomInt === 0) {
+                                candidateY--;
+                            }
+                            // RIGHT
+                            else if (randomInt === 1) {
+                                candidateX++;
+                            }
+                            // DOWN
+                            else if (randomInt === 2) {
+                                candidateY++;
+                            }
+                            // LEFT
+                            else if (randomInt === 3) {
+                                candidateX--;
+                            }
+                            if (dad.isEmptyPoint(candidateX, candidateY) &&
+                                newPoints[candidateX + '.' + candidateY] !== true) {
+                                oldPoints[x + '.' + y] = true;
+                                newPoints[candidateX + '.' + candidateY] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            for (var x in oldPoints) {
+                var point = x.split('.');
+                world[point[0]][point[1]].hasCPU = false;
+            }
+            for (var x in newPoints) {
+                var point = x.split('.');
+                world[point[0]][point[1]].hasCPU = true;
+            }
         }
     };
 
@@ -117,25 +200,25 @@ var start = function(p) {
             p.ellipse(x + 10, y + 40, 45, 45);
             p.stroke(0, 0, 0);
         },
-		drawLake: function(block) {
-			if (block.hasLake === true) {
-				p.fill(13, 0, 255);
-				p.noStroke();
-				p.rect(block.x, block.y, blockDimensions.width, blockDimensions.height);
-				p.stroke(0, 0, 0);
-			}
-		},
+        drawLake: function(block) {
+            if (block.hasLake === true) {
+                p.fill(13, 0, 255);
+                p.noStroke();
+                p.rect(block.x, block.y, blockDimensions.width, blockDimensions.height);
+                p.stroke(0, 0, 0);
+            }
+        },
         draw: function() {
             for (var i = 0; i < world.length; i += 1) {
                 for (var j = 0; j < world[i].length; j += 1) {
                     this.drawEnvironment(world[i][j]);
                 }
             }
-			for (var i = 0; i < world.length; i += 1) {
-				for (var j = 0; j < world[i].length; j += 1) {
-					this.drawLake(world[i][j]);
-				}
-			}
+            for (var i = 0; i < world.length; i += 1) {
+                for (var j = 0; j < world[i].length; j += 1) {
+                    this.drawLake(world[i][j]);
+                }
+            }
             for (var i = 0; i < world.length; i += 1) {
                 for (var j = 0; j < world[i].length; j += 1) {
                     this.drawPlayer(world[i][j]);
@@ -205,28 +288,28 @@ var start = function(p) {
     p.keyReleased = function() {
 
         if (p.keyPressed && p.keyCode === p.UP && playerY > 0) {
-            dad.addEvent(function() {
+            dad.addEvent('playerMove', function() {
                 world[playerX][playerY].hasPlayer = false;
                 world[playerX][playerY-1].hasPlayer = true;
                 playerY--;
             });
         }
         if(p.keyPressed && p.keyCode === p.DOWN && playerY < worldDimensions.height - 1){
-            dad.addEvent(function() {
+            dad.addEvent('playerMove', function() {
                 world[playerX][playerY+1].hasPlayer = true;
                 world[playerX][playerY].hasPlayer = false;
                 playerY++;
             });
         }
         if(p.keyPressed && p.keyCode === p.RIGHT && playerX < worldDimensions.width - 1) {
-            dad.addEvent(function() {
+            dad.addEvent('playerMove', function() {
                 world[playerX+1][playerY].hasPlayer = true;
                 world[playerX][playerY].hasPlayer = false;
                 playerX++;
             });
         }  
         if (p.keyPressed && p.keyCode === p.LEFT && playerX > 0) {
-            dad.addEvent(function() {
+            dad.addEvent('playerMove', function() {
                 world[playerX][playerY].hasPlayer = false;
                 world[playerX-1][playerY].hasPlayer = true;
                 playerX--;
@@ -240,6 +323,7 @@ var start = function(p) {
         jack.draw();
         drawLoopCount++;
         if (drawLoopCount % 1 === 0) {
+            dad.addEvent('cpuMove', dad.moveCPUs);
             dad.tick();
             drawLoopCount = 0;
         }
