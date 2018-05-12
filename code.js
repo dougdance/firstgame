@@ -33,6 +33,8 @@ var start = function(p) {
     };
 
     var world = [];
+    var isPlayerNextToCPU = false;
+    var playerDirection = null;
 
     for (var i = 0; i < worldDimensions.width; i += 1) {
         world[i] = [];
@@ -121,11 +123,17 @@ var start = function(p) {
         addEvent: function(type, event) {
             this.events[type] = event;
         },
-        isEmptyPoint: function(x, y) {
+        isPointInBounds: function(x, y) {
             if (x < 0 || y < 0) {
                 return false;
             }
             if (x >= worldDimensions.width || y >= worldDimensions.height) {
+                return false;
+            }
+            return true;
+        },
+        isEmptyPoint: function(x, y) {
+            if (! dad.isPointInBounds(x, y)) {
                 return false;
             }
             var block = world[x][y];
@@ -133,6 +141,16 @@ var start = function(p) {
                 return false;
             }
             return true;
+        },
+        pointHasCPU: function(x, y) {
+            if (! dad.isPointInBounds(x, y)) {
+                return false;
+            }
+            var block = world[x][y];
+            if (block.hasCPU === true) {
+                return true;
+            }
+            return false;
         },
         moveCPUs: function() {
             var oldPoints = {};
@@ -184,6 +202,47 @@ var start = function(p) {
                 var point = x.split('.');
                 world[point[0]][point[1]].hasCPU = true;
             }
+        },
+        setIsPlayerNextToCPU: function() {
+            if (playerDirection === p.UP) {
+                if (dad.pointHasCPU(playerX, playerY - 1)) {
+                    isPlayerNextToCPU = true;
+                    return;
+                }
+            }
+            else if (playerDirection === p.RIGHT) {
+                if (dad.pointHasCPU(playerX + 1, playerY)) {
+                    isPlayerNextToCPU = true;
+                    return;
+                }
+            }
+            else if (playerDirection === p.DOWN) {
+                if (dad.pointHasCPU(playerX, playerY + 1)) {
+                    isPlayerNextToCPU = true;
+                    return;
+                }
+            }
+            else if (playerDirection === p.LEFT) {
+                if (dad.pointHasCPU(playerX - 1, playerY)) {
+                    isPlayerNextToCPU = true;
+                    return;
+                }
+            }
+            isPlayerNextToCPU = false;
+        },
+        playerAttack: function() {
+            if (playerDirection === p.UP) {
+                world[playerX][playerY - 1].hasCPU = false;
+            }
+            else if (playerDirection === p.RIGHT) {
+                world[playerX + 1][playerY].hasCPU = false;
+            }
+            else if (playerDirection === p.DOWN) {
+                world[playerX][playerY + 1].hasCPU = false;
+            }
+            else if (playerDirection === p.LEFT) {
+                world[playerX - 1][playerY].hasCPU = false;
+            }
         }
     };
 
@@ -230,12 +289,24 @@ var start = function(p) {
                     this.drawTrees(world[i][j]);
                 }
             }
+            if (isPlayerNextToCPU === true) {
+                this.drawCPUInteractionOptions();
+            }
+        },
 
+        drawCPUInteractionOptions: function() {
+            p.fill(100, 100, 100, 90);
+            p.rect(25, 25, 120, 40);
+            p.fill(0, 0, 0, 90);
+            p.textSize(16);
+            p.text("a = Attack", 50, 50);
         },
 
         drawEnvironment: function(block) {
             p.fill(35, 105, 27);
+            p.noStroke();
             p.rect(block.x, block.y, block.width, block.height);       
+            p.stroke(0, 0, 0);
         },
 
         drawTrees: function(block) {
@@ -268,51 +339,74 @@ var start = function(p) {
     jordie = {
         drawPlayer: function(x, y, width, height) {
 
+            var middleX = x + blockDimensions.width / 2;
+            var middleY = y + blockDimensions.height / 2;
+
             p.fill(194, 110, 110);
-            p.ellipse(x + blockDimensions.width / 2, y + blockDimensions.height / 2 + 10,width-5,height-55);
-            p.ellipse(x + blockDimensions.width / 2, y + blockDimensions.height / 2 - 10,width-5,height-55);
+            p.ellipse(middleX, middleY + 10, width-5, height-55);
+            p.ellipse(middleX, middleY - 10, width-5, height-55);
             p.fill(224, 156, 156);
-            p.ellipse(x + blockDimensions.width / 2, y + blockDimensions.height / 2 - 5,width-5,height-55);
-            p.ellipse(x + blockDimensions.width / 2, y + blockDimensions.height / 2 + 5,width-5,height-55);
+            p.ellipse(middleX, middleY - 5, width-5, height-55);
+            p.ellipse(middleX, middleY + 5, width-5, height-55);
             p.fill(235, 202, 202);
-            p.ellipse(x + blockDimensions.width / 2, y + blockDimensions.height / 2,width-5,height-55);
+            p.ellipse(middleX, middleY, width-5, height-55);
             p.fill(143, 40, 40);
-            p.ellipse(x + blockDimensions.width / 2, y + blockDimensions.height / 2,width-22.5,height-22.5);
+            p.ellipse(middleX, middleY, width-22.5, height-22.5);
             p.fill(255, 0, 9);
             p.textSize(width-19);
             p.text("{  }",x + 6,y + 33);
 
+            var lineLength = 15;
+            if (playerDirection === p.UP) {
+                p.line(middleX, middleY, middleX, middleY - lineLength);
+            }
+            else if (playerDirection === p.RIGHT) {
+                p.line(middleX, middleY, middleX + lineLength, middleY);
+            }
+            else if (playerDirection === p.DOWN) {
+                p.line(middleX, middleY, middleX, middleY + lineLength);
+            }
+            else if (playerDirection === p.LEFT) {
+                p.line(middleX, middleY, middleX - lineLength, middleY);
+            }
         }
     };
 
     p.keyReleased = function() {
 
-        if (p.keyPressed && p.keyCode === p.UP && playerY > 0) {
+        if (p.keyPressed && p.key.code === 97 && isPlayerNextToCPU) {
+            dad.addEvent('playerAttack', dad.playerAttack);
+        }
+        if (p.keyPressed && (p.keyCode === p.UP || p.key.code === 107) && playerY > 0) {
             dad.addEvent('playerMove', function() {
                 world[playerX][playerY].hasPlayer = false;
                 world[playerX][playerY-1].hasPlayer = true;
                 playerY--;
+                playerDirection = p.UP;
             });
         }
-        if(p.keyPressed && p.keyCode === p.DOWN && playerY < worldDimensions.height - 1){
+        if(p.keyPressed && (p.keyCode === p.DOWN || p.key.code === 106)  && playerY < worldDimensions.height - 1){
             dad.addEvent('playerMove', function() {
                 world[playerX][playerY+1].hasPlayer = true;
                 world[playerX][playerY].hasPlayer = false;
                 playerY++;
+                playerDirection = p.DOWN;
             });
         }
-        if(p.keyPressed && p.keyCode === p.RIGHT && playerX < worldDimensions.width - 1) {
+        if(p.keyPressed && (p.keyCode === p.RIGHT || p.key.code === 108) && playerX < worldDimensions.width - 1) {
             dad.addEvent('playerMove', function() {
                 world[playerX+1][playerY].hasPlayer = true;
                 world[playerX][playerY].hasPlayer = false;
                 playerX++;
+                playerDirection = p.RIGHT;
             });
         }  
-        if (p.keyPressed && p.keyCode === p.LEFT && playerX > 0) {
+        if (p.keyPressed && (p.keyCode === p.LEFT || p.key.code === 104) && playerX > 0) {
             dad.addEvent('playerMove', function() {
                 world[playerX][playerY].hasPlayer = false;
                 world[playerX-1][playerY].hasPlayer = true;
                 playerX--;
+                playerDirection = p.LEFT;
             });
         }
     };
@@ -324,6 +418,7 @@ var start = function(p) {
         drawLoopCount++;
         if (drawLoopCount % 1 === 0) {
             dad.addEvent('cpuMove', dad.moveCPUs);
+            dad.addEvent('setIsPlayerNextToCPU', dad.setIsPlayerNextToCPU);
             dad.tick();
             drawLoopCount = 0;
         }
