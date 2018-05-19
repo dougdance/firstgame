@@ -379,33 +379,41 @@ var start = function(p) {
         }
         if (p.keyPressed && (p.keyCode === p.UP || p.key.code === 107) && playerY > 0) {
             dad.addEvent('playerMove', function() {
-                world[playerX][playerY].hasPlayer = false;
-                world[playerX][playerY-1].hasPlayer = true;
-                playerY--;
+                if (dad.pointHasCPU(playerX, playerY-1) === false) {
+                    world[playerX][playerY].hasPlayer = false;
+                    world[playerX][playerY-1].hasPlayer = true;
+                    playerY--;
+                }
                 playerDirection = p.UP;
             });
         }
         if(p.keyPressed && (p.keyCode === p.DOWN || p.key.code === 106)  && playerY < worldDimensions.height - 1){
             dad.addEvent('playerMove', function() {
-                world[playerX][playerY+1].hasPlayer = true;
-                world[playerX][playerY].hasPlayer = false;
-                playerY++;
+                if (dad.pointHasCPU(playerX, playerY+1) === false) {
+                    world[playerX][playerY+1].hasPlayer = true;
+                    world[playerX][playerY].hasPlayer = false;
+                    playerY++;
+                }
                 playerDirection = p.DOWN;
             });
         }
         if(p.keyPressed && (p.keyCode === p.RIGHT || p.key.code === 108) && playerX < worldDimensions.width - 1) {
             dad.addEvent('playerMove', function() {
-                world[playerX+1][playerY].hasPlayer = true;
-                world[playerX][playerY].hasPlayer = false;
-                playerX++;
+                if (dad.pointHasCPU(playerX+1, playerY) === false) {
+                    world[playerX+1][playerY].hasPlayer = true;
+                    world[playerX][playerY].hasPlayer = false;
+                    playerX++;
+                }
                 playerDirection = p.RIGHT;
             });
         }  
         if (p.keyPressed && (p.keyCode === p.LEFT || p.key.code === 104) && playerX > 0) {
             dad.addEvent('playerMove', function() {
-                world[playerX][playerY].hasPlayer = false;
-                world[playerX-1][playerY].hasPlayer = true;
-                playerX--;
+                if (dad.pointHasCPU(playerX-1, playerY) === false) {
+                    world[playerX][playerY].hasPlayer = false;
+                    world[playerX-1][playerY].hasPlayer = true;
+                    playerX--;
+                }
                 playerDirection = p.LEFT;
             });
         }
