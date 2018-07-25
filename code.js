@@ -6,8 +6,6 @@ var start = function(p) {
      *
      *
      */
-    p.size(600, 600); 
-    p.frameRate(30);
 
     /**
      *
@@ -19,6 +17,347 @@ var start = function(p) {
     var getRandomInt = function(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     };
+    var pointIsInRect = function(x, y, xRect, yRect, wRect, hRect) {
+        return (x >= xRect && x <= (xRect + wRect)) &&
+               (y >= yRect && y <= (yRect + hRect));
+    };
+
+    /**
+     *
+     *
+     * Draw Helpers
+     *
+     *
+     */
+    var gradientX = function(x, y, w, h, c1, c2, percentage) {
+        var xOffset = x + w;
+        var yOffset = y + h;
+        for (var i = x; i <= xOffset; i++) {
+            var inter = p.map(i, x, xOffset, 0, 1);
+            if (inter >= percentage) {
+                break;
+            }
+            var c = p.lerpColor(c1, c2, inter);
+            p.stroke(c);
+            p.line(i, y, i, yOffset);
+        }
+    };
+    var gradientY = function(x, y, w, h, c1, c2, percentage) {
+        var xOffset = x + w;
+        var yOffset = y + h;
+        for (var i = y; i <= yOffset; i++) {
+            var inter = p.map(i, y, yOffset, 0, 1);
+            if (inter >= percentage) {
+                break;
+            }
+            var c = p.lerpColor(c1, c2, inter);
+            p.stroke(c);
+            p.line(x, i, xOffset, i);
+        }
+    };
+
+    var States = {
+        Opening: 'opening',
+        Opened: 'opened',
+        Starting: 'starting',
+        Started: 'started',
+        Finishing: 'finishing',
+        Finished: 'finished'
+    };
+    var Sizes = {
+        Small: 'small',
+        Medium: 'medium',
+        Large: 'large'
+    };
+    var Colors = {
+        Black: p.color(0, 0, 0),
+        ForestGreen: p.color(120, 184, 81),
+        Mantle: { // https://uigradients.com/#Mantle
+            A: p.color(81, 74, 157),
+            B: p.color(36, 198, 220)
+        },
+        Miaka: { // https://uigradients.com/#Miaka
+            A: p.color(10, 191, 188),
+            B: p.color(252, 53, 76)
+        },
+        Stellar: { // https://uigradients.com/#Stellar
+            A: p.color(52, 138, 199),
+            B: p.color(116, 116, 191)
+        },
+        Titanium: { // https://uigradients.com/#Titanium
+            A: p.color(40, 48, 72),
+            B: p.color(133, 147, 152)
+        }
+    };
+    var Keys = {
+        Up: function() {
+            return p.keyCode === p.UP || p.key.code === 119;
+        },
+        Down: function() {
+            return p.keyCode === p.DOWN || p.key.code === 115;
+        },
+        Left: function() {
+            return p.keyCode === p.LEFT || p.key.code === 97;
+        },
+        Right: function() {
+            return p.keyCode === p.RIGHT || p.key.code === 100;
+        }
+    };
+    function Game() {
+        var _this = this;
+        this.size = {
+            x: document.documentElement.clientWidth - 20,
+            y: document.documentElement.clientHeight - 20
+        };
+        this.frameRate = 30;
+        //this.state = States.Opening;
+        this.state = States.Started;
+    };
+    var game = new Game();
+
+    function Opening() {
+        var _this = this;
+        this.data = {
+            percentageComplete: 0
+        };
+        this.view = {
+            xMid: game.size.x / 2,
+            yMid: game.size.y / 2,
+
+            wBar: game.size.x * 0.8,
+            hBar: game.size.y * 0.05
+        };
+        this.view.xBar = _this.view.xMid - (_this.view.wBar / 2);
+        this.view.yBar = _this.view.yMid - (_this.view.hBar / 2);
+        this.keyPressed = function() {
+        };
+        this.mousePressed = function() {
+        };
+        this.mouseReleased = function() {
+        };
+        this.tick = function() {
+            _this.data.percentageComplete = _this.data.percentageComplete + 0.03;
+            if (_this.data.percentageComplete >= 1) {
+                game.state = States.Opened;
+            }
+        };
+        this.paint = function() {
+            gradientY(
+                0,
+                0,
+                game.size.x,
+                game.size.y,
+                Colors.Titanium.A,
+                Colors.Titanium.B);
+
+            gradientX(
+                _this.view.xBar,
+                _this.view.yBar,
+                _this.view.wBar,
+                _this.view.hBar,
+                Colors.Miaka.A,
+                Colors.Miaka.B,
+                _this.data.percentageComplete);
+        };
+    };
+    var opening = new Opening();
+
+    function Opened() {
+        var _this = this;
+        this.data = {
+        };
+        this.view = {
+            xMid: game.size.x / 2,
+            yMid: game.size.y / 2,
+
+            wButton: game.size.x * 0.1,
+            hButton: game.size.y * 0.1,
+
+            pressedOverButton: false
+        };
+        this.view.xButton = _this.view.xMid - (_this.view.wButton / 2);
+        this.view.yButton = _this.view.yMid - (_this.view.hButton / 2);
+        this.keyPressed = function() {
+        };
+        this.mousePressed = function() {
+            if (pointIsInRect(p.mouseX, p.mouseY, _this.view.xButton, _this.view.yButton, _this.view.wButton, _this.view.hButton)) {
+                _this.view.pressedOverButton = true;
+            }
+            else {
+                _this.view.pressedOverButton = false;
+            }
+        };
+        this.mouseReleased = function() {
+            if (pointIsInRect(p.mouseX, p.mouseY, _this.view.xButton, _this.view.yButton, _this.view.wButton, _this.view.hButton) && _this.view.pressedOverButton) {
+                game.state = States.Starting;
+            }
+            else {
+                _this.view.pressedOverButton = false;
+            }
+        };
+        this.tick = function() {
+        };
+        this.paint = function() {
+            gradientY(
+                0,
+                0,
+                game.size.x,
+                game.size.y,
+                Colors.Titanium.A,
+                Colors.Titanium.B);
+
+            if (pointIsInRect(p.mouseX, p.mouseY, _this.view.xButton, _this.view.yButton, _this.view.wButton, _this.view.hButton)) {
+                p.fill(Colors.Stellar.B);
+            }
+            else {
+                p.fill(Colors.Stellar.A);
+            }
+            p.noStroke();
+            p.rect(_this.view.xButton, _this.view.yButton, _this.view.wButton, _this.view.hButton);
+            p.fill(Colors.White);
+            p.textAlign(p.CENTER, p.CENTER);
+            p.textSize(16);
+            p.text('Start!', _this.view.xButton, _this.view.yButton - 3, _this.view.wButton, _this.view.hButton);
+        };
+    };
+    var opened = new Opened();
+
+    function Starting() {
+        var _this = this;
+        this.data = {
+        };
+        this.view = {
+        };
+        this.keyPressed = function() {
+        };
+        this.mousePressed = function() {
+        };
+        this.mouseReleased = function() {
+        };
+        this.tick = function() {
+            game.state = States.Started;
+        };
+        this.paint = function() {
+            gradientY(
+                0,
+                0,
+                game.size.x,
+                game.size.y,
+                Colors.Titanium.A,
+                Colors.Titanium.B);
+        };
+    };
+    var starting = new Starting();
+
+    // my current thinking:
+    // don't worry about friction at all
+    // keep things modeled as accelerations
+    //
+    // TODO: minimize accelerations list
+    // perhaps by keeping track of 4 separate integers and incrementing or decremeting them on key press
+    function Started() {
+        var _this = this;
+        var PLAYER_SIZE = 10;
+        this.data = {
+            player: {
+                size: PLAYER_SIZE,
+                speed: 5,
+                accelerations: [],
+                position: {
+                    x: getRandomInt(PLAYER_SIZE, game.size.x - PLAYER_SIZE),
+                    y: getRandomInt(PLAYER_SIZE, game.size.y - PLAYER_SIZE)
+                }
+            }
+        };
+        this.view = {
+        };
+        this.keyPressed = function() {
+            if (Keys.Up()) {
+                _this.data.player.accelerations.push({
+                    velocity: {
+                        distance: {
+                            x: 0,
+                            y: -_this.data.player.speed
+                        },
+                        time: 1
+                    },
+                    time: 1
+                });
+            }
+            if (Keys.Down()) {
+                _this.data.player.accelerations.push({
+                    velocity: {
+                        distance: {
+                            x: 0,
+                            y: _this.data.player.speed
+                        },
+                        time: 1
+                    },
+                    time: 1
+                });
+            }
+            if (Keys.Left()) {
+                _this.data.player.accelerations.push({
+                    velocity: {
+                        distance: {
+                            x: -_this.data.player.speed,
+                            y: 0
+                        },
+                        time: 1
+                    },
+                    time: 1
+                });
+            }
+            if (Keys.Right()) {
+                _this.data.player.accelerations.push({
+                    velocity: {
+                        distance: {
+                            x: _this.data.player.speed,
+                            y: 0
+                        },
+                        time: 1
+                    },
+                    time: 1
+                });
+            }
+        };
+        this.mousePressed = function() {
+        };
+        this.mouseReleased = function() {
+        };
+        this.tick = function() {
+            var tickVelocity = {
+                distance: {
+                    x: 0,
+                    y: 0
+                },
+                time: 1
+            };
+            for (var i = 0; i < _this.data.player.accelerations.length; ++i) {
+                var acceleration = _this.data.player.accelerations[i];
+                tickVelocity.distance.x = (tickVelocity.distance.x + (acceleration.velocity.distance.x / acceleration.velocity.time)) / acceleration.time;
+                tickVelocity.distance.y = (tickVelocity.distance.y + (acceleration.velocity.distance.y / acceleration.velocity.time)) / acceleration.time;
+            }
+            _this.data.player.position.x = _this.data.player.position.x + tickVelocity.distance.x;
+            _this.data.player.position.y = _this.data.player.position.y + tickVelocity.distance.y;
+        };
+        this.paint = function() {
+            p.background(Colors.ForestGreen);
+            p.fill(Colors.Black);
+            p.ellipse(_this.data.player.position.x, _this.data.player.position.y, _this.data.player.size, _this.data.player.size);
+        };
+    };
+    var started = new Started();
+
+    var StateHandlers = {
+        [States.Opening]: opening,
+        [States.Opened]: opened,
+        [States.Starting]: starting,
+        [States.Started]: started
+    };
+
+    p.size(game.size.x, game.size.y); 
+    p.frameRate(game.frameRate);
 
     // jack's stuff goes in here
 
@@ -57,7 +396,7 @@ var start = function(p) {
     world[playerX][playerY].hasPlayer = true;
 
     var numTrees = getRandomInt(6, 14);
-    
+
     var numLakes = getRandomInt(1, 3);
     for (var i = 0; i < numLakes; i++) {
         var lakeX = getRandomInt(0, worldDimensions.width - 1);
@@ -418,18 +757,27 @@ var start = function(p) {
             });
         }
     };
-    var drawLoopCount = 0;
+
+    p.keyPressed = function() {
+        StateHandlers[game.state].keyPressed();
+    };
+    p.mousePressed = function() {
+        StateHandlers[game.state].mousePressed();
+    };
+    p.mouseReleased = function() {
+        StateHandlers[game.state].mouseReleased();
+    };
+
     p.draw = function() {
-        p.background(120, 184, 81);
-        p.stroke(0, 0, 0);
-        jack.draw();
-        drawLoopCount++;
-        if (drawLoopCount % 1 === 0) {
-            dad.addEvent('cpuMove', dad.moveCPUs);
-            dad.addEvent('setIsPlayerNextToCPU', dad.setIsPlayerNextToCPU);
-            dad.tick();
-            drawLoopCount = 0;
-        }
+        //p.background(120, 184, 81);
+        //p.stroke(0, 0, 0);
+        //jack.draw();
+
+        //dad.addEvent('cpuMove', dad.moveCPUs);
+        //dad.addEvent('setIsPlayerNextToCPU', dad.setIsPlayerNextToCPU);
+        //dad.tick();
+        StateHandlers[game.state].tick();
+        StateHandlers[game.state].paint();
     };
 
 };
