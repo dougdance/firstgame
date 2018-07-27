@@ -249,20 +249,20 @@ var start = function(p) {
     };
     var starting = new Starting();
 
-    // my current thinking:
-    // don't worry about friction at all
-    // keep things modeled as accelerations
-    //
-    // TODO: minimize accelerations list
-    // perhaps by keeping track of 4 separate integers and incrementing or decremeting them on key press
     function Started() {
         var _this = this;
         var PLAYER_SIZE = 10;
         this.data = {
             player: {
                 size: PLAYER_SIZE,
-                speed: 5,
-                accelerations: [],
+                speed: {
+                    max: 6,
+                    increment: 2
+                },
+                movement: {
+                    x: 0,
+                    y: 0
+                },
                 position: {
                     x: getRandomInt(PLAYER_SIZE, game.size.x - PLAYER_SIZE),
                     y: getRandomInt(PLAYER_SIZE, game.size.y - PLAYER_SIZE)
@@ -273,52 +273,16 @@ var start = function(p) {
         };
         this.keyPressed = function() {
             if (Keys.Up()) {
-                _this.data.player.accelerations.push({
-                    velocity: {
-                        distance: {
-                            x: 0,
-                            y: -_this.data.player.speed
-                        },
-                        time: 1
-                    },
-                    time: 1
-                });
+                _this.data.player.movement.y -= _this.data.player.speed.increment;
             }
             if (Keys.Down()) {
-                _this.data.player.accelerations.push({
-                    velocity: {
-                        distance: {
-                            x: 0,
-                            y: _this.data.player.speed
-                        },
-                        time: 1
-                    },
-                    time: 1
-                });
+                _this.data.player.movement.y += _this.data.player.speed.increment;
             }
             if (Keys.Left()) {
-                _this.data.player.accelerations.push({
-                    velocity: {
-                        distance: {
-                            x: -_this.data.player.speed,
-                            y: 0
-                        },
-                        time: 1
-                    },
-                    time: 1
-                });
+                _this.data.player.movement.x -= _this.data.player.speed.increment;
             }
             if (Keys.Right()) {
-                _this.data.player.accelerations.push({
-                    velocity: {
-                        distance: {
-                            x: _this.data.player.speed,
-                            y: 0
-                        },
-                        time: 1
-                    },
-                    time: 1
-                });
+                _this.data.player.movement.x += _this.data.player.speed.increment;
             }
         };
         this.mousePressed = function() {
@@ -326,21 +290,51 @@ var start = function(p) {
         this.mouseReleased = function() {
         };
         this.tick = function() {
-            var tickVelocity = {
-                distance: {
-                    x: 0,
-                    y: 0
-                },
-                time: 1
-            };
-            for (var i = 0; i < _this.data.player.accelerations.length; ++i) {
-                var acceleration = _this.data.player.accelerations[i];
-                tickVelocity.distance.x = (tickVelocity.distance.x + (acceleration.velocity.distance.x / acceleration.velocity.time)) / acceleration.time;
-                tickVelocity.distance.y = (tickVelocity.distance.y + (acceleration.velocity.distance.y / acceleration.velocity.time)) / acceleration.time;
+            _this.constrainPlayerSpeed(_this.data.player);
+
+            if (_this.data.player.movement.x !== 0) {
+                _this.data.player.position.x += _this.data.player.movement.x;
             }
-            _this.data.player.position.x = _this.data.player.position.x + tickVelocity.distance.x;
-            _this.data.player.position.y = _this.data.player.position.y + tickVelocity.distance.y;
+            if (_this.data.player.movement.y !== 0) {
+                _this.data.player.position.y += _this.data.player.movement.y;
+            }
+
+            _this.constrainPlayerBoundary(_this.data.player);
         };
+
+        this.constrainPlayerSpeed = function(player) {
+            if (player.movement.x > player.speed.max) {
+                player.movement.x = player.speed.max;
+            }
+            if (player.movement.x < -player.speed.max) {
+                player.movement.x = -player.speed.max;
+            }
+            if (player.movement.y > player.speed.max) {
+                player.movement.y = player.speed.max;
+            }
+            if (player.movement.y < -player.speed.max) {
+                player.movement.y = -player.speed.max;
+            }
+        };
+        this.constrainPlayerBoundary = function(player) {
+            if (player.position.x <= 0 + player.size) {
+                player.position.x = player.size;
+                player.movement.x = 0;
+            }
+            if (player.position.x >= game.size.x - player.size) {
+                player.position.x = game.size.x - player.size;
+                player.movement.x = 0;
+            }
+            if (player.position.y <= 0 + player.size) {
+                player.position.y = player.size;
+                player.movement.y = 0;
+            }
+            if (player.position.y >= game.size.y - player.size) {
+                player.position.y = game.size.y - player.size;
+                player.movement.y = 0;
+            }
+        }
+
         this.paint = function() {
             p.background(Colors.ForestGreen);
             p.fill(Colors.Black);
