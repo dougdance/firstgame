@@ -71,6 +71,7 @@ var start = function(p) {
     };
     var Colors = {
         Black: p.color(0, 0, 0),
+        DarkGreen: p.color(75, 168, 59),
         ForestGreen: p.color(120, 184, 81),
         Mantle: { // https://uigradients.com/#Mantle
             A: p.color(81, 74, 157),
@@ -110,8 +111,7 @@ var start = function(p) {
             y: document.documentElement.clientHeight - 20
         };
         this.frameRate = 30;
-        //this.state = States.Opening;
-        this.state = States.Started;
+        this.state = States.Opening;
     };
     var game = new Game();
 
@@ -130,6 +130,8 @@ var start = function(p) {
         this.view.xBar = _this.view.xMid - (_this.view.wBar / 2);
         this.view.yBar = _this.view.yMid - (_this.view.hBar / 2);
         this.keyPressed = function() {
+        };
+        this.keyReleased = function() {
         };
         this.mousePressed = function() {
         };
@@ -178,6 +180,8 @@ var start = function(p) {
         this.view.xButton = _this.view.xMid - (_this.view.wButton / 2);
         this.view.yButton = _this.view.yMid - (_this.view.hButton / 2);
         this.keyPressed = function() {
+        };
+        this.keyReleased = function() {
         };
         this.mousePressed = function() {
             if (pointIsInRect(p.mouseX, p.mouseY, _this.view.xButton, _this.view.yButton, _this.view.wButton, _this.view.hButton)) {
@@ -230,6 +234,8 @@ var start = function(p) {
         };
         this.keyPressed = function() {
         };
+        this.keyReleased = function() {
+        };
         this.mousePressed = function() {
         };
         this.mouseReleased = function() {
@@ -249,6 +255,7 @@ var start = function(p) {
     };
     var starting = new Starting();
 
+    // TODO: make trees next, which hide the player
     function Started() {
         var _this = this;
         var PLAYER_SIZE = 10;
@@ -256,8 +263,8 @@ var start = function(p) {
             player: {
                 size: PLAYER_SIZE,
                 speed: {
-                    max: 6,
-                    increment: 2
+                    max: 8,
+                    increment: 1
                 },
                 movement: {
                     x: 0,
@@ -267,22 +274,58 @@ var start = function(p) {
                     x: getRandomInt(PLAYER_SIZE, game.size.x - PLAYER_SIZE),
                     y: getRandomInt(PLAYER_SIZE, game.size.y - PLAYER_SIZE)
                 }
+            },
+            trees: [],
+            keys: {
+                up: false,
+                down: false,
+                left: false,
+                right: false
             }
         };
         this.view = {
         };
+
+        this.init = function() {
+            var treeCount = getRandomInt(game.size.x / 100, game.size.x / 50);
+            for (var i = 0; i < treeCount; ++i) {
+                var tree = {
+                    position: {
+                        x: getRandomInt(0, game.size.x),
+                        y: getRandomInt(0, game.size.y)
+                    },
+                    size: getRandomInt(20, 50)
+                };
+                _this.data.trees.push(tree);
+            }
+        };
+
         this.keyPressed = function() {
             if (Keys.Up()) {
-                _this.data.player.movement.y -= _this.data.player.speed.increment;
+                _this.data.keys.up = true;
             }
             if (Keys.Down()) {
-                _this.data.player.movement.y += _this.data.player.speed.increment;
+                _this.data.keys.down = true;
             }
             if (Keys.Left()) {
-                _this.data.player.movement.x -= _this.data.player.speed.increment;
+                _this.data.keys.left = true;
             }
             if (Keys.Right()) {
-                _this.data.player.movement.x += _this.data.player.speed.increment;
+                _this.data.keys.right = true;
+            }
+        };
+        this.keyReleased = function() {
+            if (Keys.Up()) {
+                _this.data.keys.up = false;
+            }
+            if (Keys.Down()) {
+                _this.data.keys.down = false;
+            }
+            if (Keys.Left()) {
+                _this.data.keys.left = false;
+            }
+            if (Keys.Right()) {
+                _this.data.keys.right = false;
             }
         };
         this.mousePressed = function() {
@@ -290,6 +333,38 @@ var start = function(p) {
         this.mouseReleased = function() {
         };
         this.tick = function() {
+            // slow down when no key is pressed
+            if (!_this.data.keys.up && !_this.data.keys.down) {
+                if (_this.data.player.movement.y > 0) {
+                    _this.data.player.movement.y -= _this.data.player.speed.increment;
+                }
+                if (_this.data.player.movement.y < 0) {
+                    _this.data.player.movement.y += _this.data.player.speed.increment;
+                }
+            }
+            if (!_this.data.keys.left && !_this.data.keys.right) {
+                if (_this.data.player.movement.x > 0) {
+                    _this.data.player.movement.x -= _this.data.player.speed.increment;
+                }
+                if (_this.data.player.movement.x < 0) {
+                    _this.data.player.movement.x += _this.data.player.speed.increment;
+                }
+            }
+
+            // move when a key is pressed
+            if (_this.data.keys.up) {
+                _this.data.player.movement.y -= _this.data.player.speed.increment;
+            }
+            if (_this.data.keys.down) {
+                _this.data.player.movement.y += _this.data.player.speed.increment;
+            }
+            if (_this.data.keys.left) {
+                _this.data.player.movement.x -= _this.data.player.speed.increment;
+            }
+            if (_this.data.keys.right) {
+                _this.data.player.movement.x += _this.data.player.speed.increment;
+            }
+
             _this.constrainPlayerSpeed(_this.data.player);
 
             if (_this.data.player.movement.x !== 0) {
@@ -337,9 +412,30 @@ var start = function(p) {
 
         this.paint = function() {
             p.background(Colors.ForestGreen);
+            _this.drawPlayer();
+            _this.drawTrees();
+        };
+        this.drawPlayer = function() {
             p.fill(Colors.Black);
             p.ellipse(_this.data.player.position.x, _this.data.player.position.y, _this.data.player.size, _this.data.player.size);
         };
+        this.drawTrees = function() {
+            for (var i = 0; i < _this.data.trees.length; ++i) {
+                _this.drawTree(_this.data.trees[i]);
+            }
+        };
+        this.drawTree = function(tree) {
+            var innerOffset = tree.size * 0.2;
+            var outerOffset = tree.size * 0.8;
+            p.fill(Colors.DarkGreen);
+            p.noStroke();
+            p.ellipse(tree.position.x + innerOffset, tree.position.y + innerOffset, tree.size, tree.size);
+            p.ellipse(tree.position.x + innerOffset, tree.position.y + outerOffset, tree.size, tree.size);
+            p.ellipse(tree.position.x + outerOffset, tree.position.y + innerOffset, tree.size, tree.size);
+            p.ellipse(tree.position.x + outerOffset, tree.position.y + outerOffset, tree.size, tree.size);
+        };
+
+        this.init();
     };
     var started = new Started();
 
@@ -754,6 +850,9 @@ var start = function(p) {
 
     p.keyPressed = function() {
         StateHandlers[game.state].keyPressed();
+    };
+    p.keyReleased = function() {
+        StateHandlers[game.state].keyReleased();
     };
     p.mousePressed = function() {
         StateHandlers[game.state].mousePressed();
