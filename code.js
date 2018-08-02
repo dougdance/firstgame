@@ -71,6 +71,7 @@ var start = function(p) {
     };
     var Colors = {
         Black: p.color(0, 0, 0),
+        Blue: p.color(13, 0, 255),
         DarkGreen: p.color(75, 168, 59),
         ForestGreen: p.color(120, 184, 81),
         Mantle: { // https://uigradients.com/#Mantle
@@ -111,7 +112,8 @@ var start = function(p) {
             y: document.documentElement.clientHeight - 20
         };
         this.frameRate = 30;
-        this.state = States.Opening;
+        //this.state = States.Opening;
+        this.state = States.Started;
     };
     var game = new Game();
 
@@ -255,12 +257,112 @@ var start = function(p) {
     };
     var starting = new Starting();
 
-    // TODO: make trees next, which hide the player
     function Started() {
         var _this = this;
         var PLAYER_SIZE = 10;
         this.data = {
-            player: {
+            humanPlayer: {},
+            trees: [],
+            treePositionMap: {},
+            lakes: [],
+            lakePositionMap: {},
+            keys: {
+                up: false,
+                down: false,
+                left: false,
+                right: false
+            }
+        };
+        this.view = {
+        };
+
+        this.init = function() {
+            var lakeResult = _this.createLakes();
+            _this.data.lakes = lakeResult.lakes;
+            _this.data.lakePositionMap = lakeResult.lakePositionMap;
+
+            var treeResult = _this.createTrees(_this.data.lakePositionMap);
+            _this.data.trees = treeResult.trees;
+            _this.data.treePositionMap = treeResult.treePositionMap;
+
+            _this.data.humanPlayer = _this.createHumanPlayer();
+        };
+
+        this.createLakes = function() {
+            var lakes = [];
+            var lakePositionMap = {};
+            var lakeCount = getRandomInt(game.size.x / 200, game.size.x / 100);
+            for (var i = 0; i < lakeCount; ++i) {
+                var x = getRandomInt(0, game.size.x);
+                var y = getRandomInt(0, game.size.y);
+                var length = getRandomInt(50, 80);
+                var width = getRandomInt(50, 80);
+                var lake = {
+                    position: {
+                        x: x,
+                        y: y
+                    },
+                    size: {
+                        length: length,
+                        width: width
+                    }
+                };
+                lakes.push(lake);
+                for (var positionX = x; positionX < x + length; ++positionX) {
+                    if (! lakePositionMap.hasOwnProperty(positionX)) {
+                        lakePositionMap[positionX] = {};
+                    }
+                    for (var positionY = y; positionY < y + width; ++positionY) {
+                        lakePositionMap[positionX][positionY] = true;
+                    }
+                }
+            }
+            return {
+                lakes: lakes,
+                lakePositionMap: lakePositionMap
+            };
+        };
+
+        this.createTrees = function(lakePositionMap) {
+            var trees = [];
+            var treePositionMap = {};
+            var treeCount = getRandomInt(game.size.x / 100, game.size.x / 50);
+            for (var i = 0; i < treeCount; ++i) {
+                var x = getRandomInt(0, game.size.x);
+                var y = getRandomInt(0, game.size.y);
+
+                // if the tree center point starts in a lake, skip it
+                if (lakePositionMap.hasOwnProperty(x) && lakePositionMap[x].hasOwnProperty(y)) {
+                    continue;
+                }
+
+                var size = getRandomInt(20, 50);
+                var tree = {
+                    position: {
+                        x: x,
+                        y: y
+                    },
+                    size: size
+                };
+                var halfSize = parseInt(size / 2);
+                trees.push(tree);
+                for (var positionX = x - halfSize; positionX < x + halfSize; ++positionX) {
+                    if (! treePositionMap.hasOwnProperty(positionX)) {
+                        treePositionMap[positionX] = {};
+                    }
+                    for (var positionY = y - halfSize; positionY < y + halfSize; ++positionY) {
+                        treePositionMap[positionX][positionY] = true;
+                    }
+                }
+            }
+            return {
+                trees: trees,
+                treePositionMap: treePositionMap
+            };
+        };
+
+        this.createHumanPlayer = function() {
+            return {
                 size: PLAYER_SIZE,
                 speed: {
                     max: 8,
@@ -274,30 +376,7 @@ var start = function(p) {
                     x: getRandomInt(PLAYER_SIZE, game.size.x - PLAYER_SIZE),
                     y: getRandomInt(PLAYER_SIZE, game.size.y - PLAYER_SIZE)
                 }
-            },
-            trees: [],
-            keys: {
-                up: false,
-                down: false,
-                left: false,
-                right: false
-            }
-        };
-        this.view = {
-        };
-
-        this.init = function() {
-            var treeCount = getRandomInt(game.size.x / 100, game.size.x / 50);
-            for (var i = 0; i < treeCount; ++i) {
-                var tree = {
-                    position: {
-                        x: getRandomInt(0, game.size.x),
-                        y: getRandomInt(0, game.size.y)
-                    },
-                    size: getRandomInt(20, 50)
-                };
-                _this.data.trees.push(tree);
-            }
+            };
         };
 
         this.keyPressed = function() {
@@ -335,46 +414,56 @@ var start = function(p) {
         this.tick = function() {
             // slow down when no key is pressed
             if (!_this.data.keys.up && !_this.data.keys.down) {
-                if (_this.data.player.movement.y > 0) {
-                    _this.data.player.movement.y -= _this.data.player.speed.increment;
+                if (_this.data.humanPlayer.movement.y > 0) {
+                    _this.data.humanPlayer.movement.y -= _this.data.humanPlayer.speed.increment;
                 }
-                if (_this.data.player.movement.y < 0) {
-                    _this.data.player.movement.y += _this.data.player.speed.increment;
+                if (_this.data.humanPlayer.movement.y < 0) {
+                    _this.data.humanPlayer.movement.y += _this.data.humanPlayer.speed.increment;
                 }
             }
             if (!_this.data.keys.left && !_this.data.keys.right) {
-                if (_this.data.player.movement.x > 0) {
-                    _this.data.player.movement.x -= _this.data.player.speed.increment;
+                if (_this.data.humanPlayer.movement.x > 0) {
+                    _this.data.humanPlayer.movement.x -= _this.data.humanPlayer.speed.increment;
                 }
-                if (_this.data.player.movement.x < 0) {
-                    _this.data.player.movement.x += _this.data.player.speed.increment;
+                if (_this.data.humanPlayer.movement.x < 0) {
+                    _this.data.humanPlayer.movement.x += _this.data.humanPlayer.speed.increment;
                 }
             }
 
             // move when a key is pressed
+            // TODO: going to try putting the constraints here
             if (_this.data.keys.up) {
-                _this.data.player.movement.y -= _this.data.player.speed.increment;
+                _this.data.humanPlayer.movement.y -= _this.data.humanPlayer.speed.increment;
             }
             if (_this.data.keys.down) {
-                _this.data.player.movement.y += _this.data.player.speed.increment;
+                _this.data.humanPlayer.movement.y += _this.data.humanPlayer.speed.increment;
             }
             if (_this.data.keys.left) {
-                _this.data.player.movement.x -= _this.data.player.speed.increment;
+                _this.data.humanPlayer.movement.x -= _this.data.humanPlayer.speed.increment;
             }
             if (_this.data.keys.right) {
-                _this.data.player.movement.x += _this.data.player.speed.increment;
+                _this.data.humanPlayer.movement.x += _this.data.humanPlayer.speed.increment;
             }
 
-            _this.constrainPlayerSpeed(_this.data.player);
+            _this.constrainPlayerSpeed(_this.data.humanPlayer);
 
-            if (_this.data.player.movement.x !== 0) {
-                _this.data.player.position.x += _this.data.player.movement.x;
+            if (_this.data.humanPlayer.movement.x !== 0) {
+                _this.data.humanPlayer.position.x += _this.data.humanPlayer.movement.x;
             }
-            if (_this.data.player.movement.y !== 0) {
-                _this.data.player.position.y += _this.data.player.movement.y;
+            if (_this.data.humanPlayer.movement.y !== 0) {
+                _this.data.humanPlayer.position.y += _this.data.humanPlayer.movement.y;
             }
 
-            _this.constrainPlayerBoundary(_this.data.player);
+            _this.constrainPlayerMovement(_this.data.humanPlayer, _this.data.lakePositionMap);
+
+            // TODO seems what is causing the jumpiness in corners is that the movement and position are being updated
+            // since the key is still pressed
+            // and i think it's because i'm simulating the previous position based on the current movement
+            // event when the current move was not valid
+            // maybe i need to use the previous movement instead of the previous position
+            // but i don't know why the previous position is not being displayed correctly
+            // oh! i only can set the previous position when it has changed!
+            // let's try that, then we'll try keeping track of the previous movement instead
         };
 
         this.constrainPlayerSpeed = function(player) {
@@ -391,33 +480,104 @@ var start = function(p) {
                 player.movement.y = -player.speed.max;
             }
         };
-        this.constrainPlayerBoundary = function(player) {
-            if (player.position.x <= 0 + player.size) {
-                player.position.x = player.size;
+        this.constrainPlayerMovement = function(player, lakePositionMap) {
+            // don't let the player go out of bounds
+            if (player.position.x <= 0) {
+                player.position.x = 0;
                 player.movement.x = 0;
             }
-            if (player.position.x >= game.size.x - player.size) {
-                player.position.x = game.size.x - player.size;
+            if (player.position.x >= game.size.x) {
+                player.position.x = game.size.x;
                 player.movement.x = 0;
             }
-            if (player.position.y <= 0 + player.size) {
-                player.position.y = player.size;
+            if (player.position.y <= 0) {
+                player.position.y = 0;
                 player.movement.y = 0;
             }
-            if (player.position.y >= game.size.y - player.size) {
-                player.position.y = game.size.y - player.size;
+            if (player.position.y >= game.size.y) {
+                player.position.y = game.size.y;
                 player.movement.y = 0;
             }
-        }
+
+            // don't let the player go into a lake
+            if (_this.positionMapContains(lakePositionMap, player.position)) {
+                var position = {
+                    x: player.position.x - player.movement.x,
+                    y: player.position.y - player.movement.y
+                };
+
+                var leftOrRight = _this.positionMapContains(lakePositionMap, {x: player.position.x, y: position.y});
+                var topOrBottom = _this.positionMapContains(lakePositionMap, {x: position.x, y: player.position.y});
+
+                if (leftOrRight && topOrBottom) {
+                    console.log('hey!');
+                    var x = player.position.x;
+                    var y = player.position.y;
+                    do {
+                        if (player.movement.x > 0) {
+                            x -= 1;
+                        }
+                        else if (player.movement.x < 0) {
+                            x += 1;
+                        }
+                        if (player.movement.y > 0) {
+                            y -= 1;
+                        }
+                        else if (player.movement.y < 0) {
+                            y += 1;
+                        }
+                    }
+                    while (_this.positionMapContains(lakePositionMap, {x: x, y: y}));
+                    player.position.x = x;
+                    player.position.y = y;
+                    player.movement.x = 0;
+                    player.movement.y = 0;
+                }
+                else if (leftOrRight) {
+                    // set the position to the closest non-lake point by backtracking one pixel at a time
+                    var x = player.position.x;
+                    do {
+                        x = player.movement.x > 0 ? x - 1 : x + 1;
+                    }
+                    while (_this.positionMapContains(lakePositionMap, {x: x, y: player.position.y}));
+                    player.position.x = x;
+                    player.movement.x = 0;
+                }
+                else if (topOrBottom) {
+                    var y = player.position.y;
+                    do {
+                        y = player.movement.y > 0 ? y - 1 : y + 1;
+                    }
+                    while (_this.positionMapContains(lakePositionMap, {x: player.position.x, y: y}));
+                    player.position.y = y;
+                    player.movement.y = 0;
+                }
+            }
+        };
+        this.positionMapContains = function(positionMap, position) {
+            return positionMap.hasOwnProperty(position.x) && positionMap[position.x].hasOwnProperty(position.y);
+        };
 
         this.paint = function() {
             p.background(Colors.ForestGreen);
+            _this.drawLakes();
             _this.drawPlayer();
             _this.drawTrees();
+            _this.drawDebug();
+        };
+        this.drawLakes = function() {
+            for (var i = 0; i < _this.data.lakes.length; ++i) {
+                _this.drawLake(_this.data.lakes[i]);
+            }
+        };
+        this.drawLake = function(lake) {
+            p.fill(Colors.Blue);
+            p.noStroke();
+            p.rect(lake.position.x, lake.position.y, lake.size.length, lake.size.width, 5);
         };
         this.drawPlayer = function() {
             p.fill(Colors.Black);
-            p.ellipse(_this.data.player.position.x, _this.data.player.position.y, _this.data.player.size, _this.data.player.size);
+            p.ellipse(_this.data.humanPlayer.position.x, _this.data.humanPlayer.position.y, _this.data.humanPlayer.size, _this.data.humanPlayer.size);
         };
         this.drawTrees = function() {
             for (var i = 0; i < _this.data.trees.length; ++i) {
@@ -433,6 +593,11 @@ var start = function(p) {
             p.ellipse(tree.position.x + innerOffset, tree.position.y + outerOffset, tree.size, tree.size);
             p.ellipse(tree.position.x + outerOffset, tree.position.y + innerOffset, tree.size, tree.size);
             p.ellipse(tree.position.x + outerOffset, tree.position.y + outerOffset, tree.size, tree.size);
+        };
+        this.drawDebug = function() {
+            p.fill(Colors.Black);
+            p.text('Human Player: ' + JSON.stringify(_this.data.humanPlayer), 10, 20);
+            p.text('Keys: ' + JSON.stringify(_this.data.keys), 10, 40);
         };
 
         this.init();
